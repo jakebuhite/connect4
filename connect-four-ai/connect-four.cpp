@@ -5,8 +5,9 @@ Connect4::Connect4() {
 	cols = 7;
 	availableSpaces = rows * cols;
 	round = 1;
-	currentTurn = PLAYER1;
+	currentTurn = PLAYER2;
 	winner = NONE;
+	lastMove = std::pair<int, int>(-1, -1);
 	try
 	{
 		board = new int* [rows];
@@ -24,8 +25,9 @@ Connect4::Connect4(int rows, int cols) {
 	this->cols = cols;
 	availableSpaces = rows * cols;
 	round = 1;
-	currentTurn = PLAYER1;
+	currentTurn = PLAYER2;
 	winner = NONE;
+	lastMove = std::pair<int, int>(-1, -1);
 	try
 	{
 		board = new int* [rows];
@@ -48,38 +50,42 @@ void Connect4::beginGame() {
 	std::string actors[] = { "NONE", "PLAYER 1", "PLAYER 2" };
 	int choice = 0;
 
-	// First round. Separate from loop to ensure that the dominant moves aren't chosen
-	while (round == 1) {
+	// Main game loop
+	while (!isGoalState()) {
+		currentTurn = (currentTurn == PLAYER1) ? PLAYER2 : PLAYER1;
 		std::cout << "It is now " << actors[currentTurn] << " turn. Please select a column: ";
 		std::cin >> choice;
-		while (choice == 0 || choice == cols / 2 || choice == cols - 1) {
-			std::cout << "Please choose a column aside from 0, " << std::to_string(cols / 2) << ", and " << std::to_string(cols - 1) << ": ";
-			std::cin >> choice;
-		}
 		int row = nextRow(choice);
-		if (addDisc(row, choice) && isGoalState(row, choice)) {
-			winner = currentTurn;
-			break;
-		}
+		if (addDisc(row, choice))
+			lastMove = std::pair<int, int>(row, choice);
 		printBoard();
-		if (currentTurn == PLAYER2)
+		if (currentTurn == PLAYER1)
 			round++;
-		currentTurn = (currentTurn == PLAYER1) ? PLAYER2 : PLAYER1;
 	}
+	printBoard();
+	std::cout << "And the winner is... " << actors[winner] << "!" << std::endl;
+}
+
+void Connect4::beginGame(MiniMax* agent) {
+	std::string actors[] = { "NONE", "PLAYER 1", "AI" };
+	int choice = 0;
 
 	// Main game loop
-	while (availableSpaces > 0) {
-		std::cout << "It is now " << actors[currentTurn] << " turn. Please select a column: ";
-		std::cin >> choice;
-		int row = nextRow(choice);
-		if (addDisc(row, choice) && isGoalState(row, choice)) {
-			winner = currentTurn;
-			break;
-		}
-		printBoard();
-		if (currentTurn == PLAYER2)
-			round++;
+	while (!isGoalState()) {
 		currentTurn = (currentTurn == PLAYER1) ? PLAYER2 : PLAYER1;
+		std::cout << "It is now " << actors[currentTurn] << " turn. Please select a column: ";
+		if (currentTurn == PLAYER1) {
+			std::cin >> choice;
+		}
+		else {
+			choice = agent->getAIMove();
+		}
+		int row = nextRow(choice);
+		if (addDisc(row, choice))
+			lastMove = std::pair<int, int>(row, choice);
+		printBoard();
+		if (currentTurn == PLAYER1)
+			round++;
 	}
 	printBoard();
 	std::cout << "And the winner is... " << actors[winner] << "!" << std::endl;
@@ -95,13 +101,24 @@ void Connect4::initBoard() {
 }
 
 bool Connect4::addDisc(int row, int col) {
+	// Check if invalid move
 	if (!validMove(0, col) || row == -1) {
 		std::cout << "Invalid move on board...skipping turn" << std::endl;
 		return false;
 	}
-	// Valid move, continue
 	availableSpaces--;
 	board[row][col] = (currentTurn == PLAYER1) ? 1 : 2;
+	return true;
+}
+
+bool Connect4::addDisc(int row, int col, Actor actor) {
+	// Check if invalid move
+	if (!validMove(0, col) || row == -1) {
+		std::cout << "Invalid move on board...skipping turn" << std::endl;
+		return false;
+	}
+	availableSpaces--;
+	board[row][col] = actor;
 	return true;
 }
 
@@ -124,75 +141,103 @@ void Connect4::printBoard() {
 	std::cout << result;
 }
 
-bool Connect4::isGoalState(int lastX, int lastY) { // Checking based on the last placed disc rather than the entire board
+bool Connect4::isGoalState() {
 	int player = (currentTurn == PLAYER1) ? 1 : 2;
 	int n = 1;
 
+	// Check if the board has filled
+	if (availableSpaces == 0)
+		return true;
+
 	// Check up
-	for (int i = lastX - 1; i >= 0; i--) {
-		if (board[i][lastY] != player)
+	for (int i = lastMove.first - 1; i >= 0; i--) {
+		if (board[i][lastMove.second] != player)
 			break;
 		n++;
-		if (n >= CONNECT_COUNT) return true;
+		if (n >= CONNECT_COUNT) {
+			winner = currentTurn;
+			return true;
+		}
 	}
 
 	// Check down
-	for (int i = lastX + 1; i < rows; i++) {
-		if (board[i][lastY] != player)
+	for (int i = lastMove.first + 1; i < rows; i++) {
+		if (board[i][lastMove.second] != player)
 			break;
 		n++;
-		if (n >= CONNECT_COUNT) return true;
+		if (n >= CONNECT_COUNT) {
+			winner = currentTurn;
+			return true;
+		}
 	}
 
 	n = 1;
 
 	// Check left
-	for (int i = lastY - 1; i >= 0; i--) {
-		if (board[lastX][i] != player)
+	for (int i = lastMove.second - 1; i >= 0; i--) {
+		if (board[lastMove.first][i] != player)
 			break;
 		n++;
-		if (n >= CONNECT_COUNT) return true;
+		if (n >= CONNECT_COUNT) {
+			winner = currentTurn;
+			return true;
+		}
 	}
 
 	// Check right
-	for (int i = lastY + 1; i < cols; i++) {
-		if (board[lastX][i] != player)
+	for (int i = lastMove.second + 1; i < cols; i++) {
+		if (board[lastMove.first][i] != player)
 			break;
 		n++;
-		if (n >= CONNECT_COUNT) return true;
+		if (n >= CONNECT_COUNT) {
+			winner = currentTurn;
+			return true;
+		}
 	}
 
 	n = 1;
 
 	// Check diagonals
-	for (int i = 1; validMove(lastX + i, lastY + i); i++) {
-		if (board[lastX + i][lastY + i] != player)
+	for (int i = 1; validMove(lastMove.first + i, lastMove.second + i); i++) {
+		if (board[lastMove.first + i][lastMove.second + i] != player)
 			break;
 		n++;
-		if (n >= CONNECT_COUNT) return true;
+		if (n >= CONNECT_COUNT) {
+			winner = currentTurn;
+			return true;
+		}
 	}
 	
-	for (int i = 1; validMove(lastX - i, lastY - i); i++) {
-		if (board[lastX - i][lastY - i] != player)
+	for (int i = 1; validMove(lastMove.first - i, lastMove.second - i); i++) {
+		if (board[lastMove.first - i][lastMove.second - i] != player)
 			break;
 		n++;
-		if (n >= CONNECT_COUNT) return true;
+		if (n >= CONNECT_COUNT) {
+			winner = currentTurn;
+			return true;
+		}
 	}
 
 	n = 1;
 
-	for (int i = 1; validMove(lastX - i, lastY + i); i++) {
-		if (board[lastX - i][lastY + i] != player)
+	for (int i = 1; validMove(lastMove.first - i, lastMove.second + i); i++) {
+		if (board[lastMove.first - i][lastMove.second + i] != player)
 			break;
 		n++;
-		if (n >= CONNECT_COUNT) return true;
+		if (n >= CONNECT_COUNT) {
+			winner = currentTurn;
+			return true;
+		}
 	}
 
-	for (int i = 1; validMove(lastX + i, lastY - i); i++) {
-		if (board[lastX + i][lastY - i] != player)
+	for (int i = 1; validMove(lastMove.first + i, lastMove.second - i); i++) {
+		if (board[lastMove.first + i][lastMove.second - i] != player)
 			break;
 		n++;
-		if (n >= CONNECT_COUNT) return true;
+		if (n >= CONNECT_COUNT) {
+			winner = currentTurn;
+			return true;
+		}
 	}
 
 	return false;
@@ -209,3 +254,31 @@ int Connect4::nextRow(int col) {
 			n = i;
 	return n;
 }
+
+std::vector<int> Connect4::getValidActions() {
+	std::vector<int> actions;
+	for (int i = 0; i < cols; i++) {
+		if (!board[0][i])
+			actions.push_back(i);
+	}
+	return actions;
+}
+
+void Connect4::removeDisc(int row, int col) {
+	if (!validMove(row, col)) {
+		return;
+	}
+	board[row][col] = 0;
+}
+
+int Connect4::getCols() { return cols; }
+
+int Connect4::getRows() { return rows; }
+
+int Connect4::getPos(int row, int col) { return board[row][col]; }
+
+int Connect4::getAvailableSpaces() { return availableSpaces; }
+
+Actor Connect4::getWinner() { return winner; }
+
+Actor Connect4::getCurrentTurn() { return currentTurn; }

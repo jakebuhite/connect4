@@ -129,9 +129,11 @@
   <ItemGroup>
     <ClCompile Include="connect-four-ai.cpp" />
     <ClCompile Include="connect-four.cpp" />
+    <ClCompile Include="minimax.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="connect-four.h" />
+    <ClInclude Include="minimax.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

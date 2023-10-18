@@ -18,6 +18,7 @@ int main()
     std::cin >> cols;
 
     Connect4* game = new Connect4(rows, cols);
+
     game->beginGame();
     delete game;
 }

@@ -21,9 +21,15 @@
     <ClCompile Include="connect-four.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="minimax.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="connect-four.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="minimax.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

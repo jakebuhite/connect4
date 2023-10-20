@@ -10,6 +10,7 @@ int main()
 {
     int rows = -1;
     int cols = -1;
+    int depth = 5;
 
     std::cout << "Please enter the number of rows: ";
     std::cin >> rows;
@@ -17,7 +18,8 @@ int main()
     std::cout << "Please enter the number of cols: ";
     std::cin >> cols;
 
-    Connect4* game = new Connect4(rows, cols);
-    game->beginGame();
+    Connect4* game = new Connect4(rows, cols, depth);
+    game->beginAIGame();
+    //game->beginGame();
     delete game;
 }

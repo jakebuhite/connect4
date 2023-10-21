@@ -1,14 +1,7 @@
 #include "connect-four.h"
 
 Connect4::Connect4() {
-	rows = 6;
-	cols = 7;
-	availableSpaces = rows * cols;
-	round = 1;
-	currentTurn = PLAYER2;
-	winner = NONE;
-	lastMove = { 0, 0 };
-	maxDepth = 6;
+	// Create dynamically allocated array (rows)
 	try
 	{
 		board = new int* [rows];
@@ -26,10 +19,7 @@ Connect4::Connect4(int rows, int cols, int d) {
 	this->cols = cols;
 	maxDepth = d;
 	availableSpaces = rows * cols;
-	round = 1;
-	currentTurn = PLAYER2;
-	winner = NONE;
-	lastMove = { 0, 0 };
+	// Create dynamically allocated array (rows)
 	try
 	{
 		board = new int* [rows];
@@ -39,6 +29,7 @@ Connect4::Connect4(int rows, int cols, int d) {
 		std::cerr << "Could not allocate sufficient space" << std::endl;
 		std::exit(1);
 	}
+
 	initBoard();
 }
 
@@ -48,7 +39,18 @@ Connect4::~Connect4() {
 	delete[] board;
 }
 
-void Connect4::beginGame() {
+void Connect4::initBoard() {
+	// Initialize cols
+	for (int i = 0; i < rows; i++)
+		board[i] = new int[cols];
+
+	// Mark the entire board as empty
+	for (int i = 0; i < rows; i++)
+		for (int j = 0; j < cols; j++)
+			board[i][j] = 0;
+}
+
+void Connect4::beginPvP() {
 	std::string actors[] = { "NONE", "PLAYER 1", "PLAYER 2" };
 	int choice = 0;
 
@@ -57,16 +59,21 @@ void Connect4::beginGame() {
 		currentTurn = (currentTurn == PLAYER1) ? PLAYER2 : PLAYER1;
 		std::cout << "It is now " << actors[currentTurn] << " turn. Please select a column: ";
 		std::cin >> choice;
+		while (isDominateMove(choice)) {
+			std::cout << "ERROR: Please pick a non-dominate move for the first round: ";
+			std::cin >> choice;
+		}
 		int row = nextRow(choice);
 		addDisc(row, choice);
 		printBoard();
-		if (currentTurn == PLAYER1)
+		if (currentTurn == PLAYER2)
 			round++;
 	}
+	winner = currentTurn;
 	std::cout << "And the winner is... " << actors[winner] << "!" << std::endl;
 }
 
-void Connect4::beginAIGame() {
+void Connect4::beginPvA() {
 	std::string actors[] = { "NONE", "PLAYER 1", "AI" };
 	int choice = 0;
 
@@ -76,6 +83,10 @@ void Connect4::beginAIGame() {
 		std::cout << "It is now " << actors[currentTurn] << " turn. Please select a column: ";
 		if (currentTurn == PLAYER1) {
 			std::cin >> choice;
+			while (isDominateMove(choice)) {
+				std::cout << "ERROR: Please pick a non-dominate move for the first round: ";
+				std::cin >> choice;
+			}
 		}
 		else {
 			std::cout << std::endl;
@@ -84,19 +95,30 @@ void Connect4::beginAIGame() {
 		int row = nextRow(choice);
 		addDisc(row, choice);
 		printBoard();
-		if (currentTurn == PLAYER1)
+		if (currentTurn == PLAYER2)
 			round++;
 	}
+	winner = currentTurn;
 	std::cout << "And the winner is... " << actors[winner] << "!" << std::endl;
 }
 
-void Connect4::initBoard() {
-	for (int i = 0; i < rows; i++)
-		board[i] = new int[cols];
+void Connect4::beginAvA() {
+	std::string actors[] = { "NONE", "PLAYER 1", "PLAYER 2" };
+	int choice = 0;
 
-	for (int i = 0; i < rows; i++)
-		for (int j = 0; j < cols; j++)
-			board[i][j] = 0;
+	// Main game loop
+	while (!isGoalState()) {
+		currentTurn = (currentTurn == PLAYER1) ? PLAYER2 : PLAYER1;
+		std::cout << "It is now " << actors[currentTurn] << " turn. Please select a column: " << std::endl;
+		choice = getAIMove();
+		int row = nextRow(choice);
+		addDisc(row, choice);
+		printBoard();
+		if (currentTurn == PLAYER2)
+			round++;
+	}
+	winner = currentTurn;
+	std::cout << "And the winner is... " << actors[winner] << "!" << std::endl;
 }
 
 void Connect4::addDisc(int row, int col) {
@@ -108,7 +130,7 @@ void Connect4::addDisc(int row, int col) {
 	}
 	availableSpaces--;
 	board[row][col] = (currentTurn == PLAYER1) ? 1 : 2;
-	lastMove = std::pair<int, int>(row, col);
+	lastMove = { row, col };
 }
 
 void Connect4::addDisc(int row, int col, Actor actor) {
@@ -120,7 +142,7 @@ void Connect4::addDisc(int row, int col, Actor actor) {
 	}
 	availableSpaces--;
 	board[row][col] = actor;
-	lastMove = std::pair<int, int>(row, col);
+	lastMove = { row, col };
 }
 
 void Connect4::removeDisc(int row, int col) {
@@ -128,14 +150,6 @@ void Connect4::removeDisc(int row, int col) {
 		board[row][col] = 0;
 	}
 	availableSpaces++;
-}
-
-std::string Connect4::repeat(std::string s, int n)
-{
-	std::string s1 = "";
-	for (int i = 0; i < n; i++)
-		s1 += s;
-	return s1;
 }
 
 void Connect4::printBoard() {
@@ -149,110 +163,6 @@ void Connect4::printBoard() {
 	std::cout << result;
 }
 
-bool Connect4::isGoalState() {
-	int n = 1;
-
-	// Check if the board has filled
-	if (availableSpaces == 0)
-		return true;
-
-	// Check up
-	for (int i = lastMove.first - 1; i >= 0; i--) {
-		if (board[i][lastMove.second] != currentTurn)
-			break;
-		n++;
-		if (n >= CONNECT_COUNT) {
-			winner = currentTurn;
-			return true;
-		}
-	}
-
-	// Check down
-	for (int i = lastMove.first + 1; i < rows; i++) {
-		if (board[i][lastMove.second] != currentTurn)
-			break;
-		n++;
-		if (n >= CONNECT_COUNT) {
-			winner = currentTurn;
-			return true;
-		}
-	}
-
-	n = 1;
-
-	// Check left
-	for (int i = lastMove.second - 1; i >= 0; i--) {
-		if (board[lastMove.first][i] != currentTurn)
-			break;
-		n++;
-		if (n >= CONNECT_COUNT) {
-			winner = currentTurn;
-			return true;
-		}
-	}
-
-	// Check right
-	for (int i = lastMove.second + 1; i < cols; i++) {
-		if (board[lastMove.first][i] != currentTurn)
-			break;
-		n++;
-		if (n >= CONNECT_COUNT) {
-			winner = currentTurn;
-			return true;
-		}
-	}
-
-	n = 1;
-
-	// Check diagonals
-	for (int i = 1; validMove(lastMove.first + i, lastMove.second + i); i++) {
-		if (board[lastMove.first + i][lastMove.second + i] != currentTurn)
-			break;
-		n++;
-		if (n >= CONNECT_COUNT) {
-			winner = currentTurn;
-			return true;
-		}
-	}
-
-	for (int i = 1; validMove(lastMove.first - i, lastMove.second - i); i++) {
-		if (board[lastMove.first - i][lastMove.second - i] != currentTurn)
-			break;
-		n++;
-		if (n >= CONNECT_COUNT) {
-			winner = currentTurn;
-			return true;
-		}
-	}
-
-	n = 1;
-
-	for (int i = 1; validMove(lastMove.first - i, lastMove.second + i); i++) {
-		if (board[lastMove.first - i][lastMove.second + i] != currentTurn)
-			break;
-		n++;
-		if (n >= CONNECT_COUNT) {
-			winner = currentTurn;
-			return true;
-		}
-	}
-
-	for (int i = 1; validMove(lastMove.first + i, lastMove.second - i); i++) {
-		if (board[lastMove.first + i][lastMove.second - i] != currentTurn)
-			break;
-		n++;
-		if (n >= CONNECT_COUNT) {
-			winner = currentTurn;
-			return true;
-		}
-	}
-	return false;
-}
-
-bool Connect4::validMove(int row, int col) {
-	return (col >= 0) && (col < cols) && (row >= 0) && (row < rows);
-}
-
 int Connect4::nextRow(int col) {
 	int n = -1;
 	for (int i = 0; i < rows; i++)
@@ -261,12 +171,103 @@ int Connect4::nextRow(int col) {
 	return n;
 }
 
-std::pair<int, int> Connect4::minValue(int alpha, int beta, int depth) {
-	std::vector<int> actions = getValidActions();
-	if (isGoalState() || depth <= 0) {
-		int move = (depth <= 0) ? 0 : actions[0];
-		return { utility(), move };
+bool Connect4::validMove(int row, int col) { return (col >= 0) && (col < cols) && (row >= 0) && (row < rows); }
+
+bool Connect4::isDominateMove(int col) { return round == 1 && (col == 0 || (cols % 2 == 1 && col == cols / 2) || col == cols - 1); }
+
+bool Connect4::isGoalState() {
+	int n = 0;
+
+	// Check if the board has filled
+	if (availableSpaces == 0) {
+		currentTurn = NONE;
+		return true;
 	}
+
+	// Check up and down
+	for (int i = lastMove.first; i >= 0; i--) {
+		if (board[i][lastMove.second] != currentTurn)
+			break;
+		n++;
+		if (n >= CONNECT_COUNT) return true;
+	}
+	for (int i = lastMove.first + 1; i < rows; i++) {
+		if (board[i][lastMove.second] != currentTurn)
+			break;
+		n++;
+		if (n >= CONNECT_COUNT) return true;
+	}
+
+	n = 0;
+	// Check left and right
+	for (int i = lastMove.second; i >= 0; i--) {
+		if (board[lastMove.first][i] != currentTurn)
+			break;
+		n++;
+		if (n >= CONNECT_COUNT) return true;
+	}
+	for (int i = lastMove.second + 1; i < cols; i++) {
+		if (board[lastMove.first][i] != currentTurn)
+			break;
+		n++;
+		if (n >= CONNECT_COUNT) return true;
+	}
+
+	n = 0;
+	// Check diagonals (TL to BR)
+	for (int i = 0; validMove(lastMove.first + i, lastMove.second + i); i++) {
+		if (board[lastMove.first + i][lastMove.second + i] != currentTurn)
+			break;
+		n++;
+		if (n >= CONNECT_COUNT) return true;
+	}
+	for (int i = 1; validMove(lastMove.first - i, lastMove.second - i); i++) {
+		if (board[lastMove.first - i][lastMove.second - i] != currentTurn)
+			break;
+		n++;
+		if (n >= CONNECT_COUNT) return true;
+	}
+
+	n = 0;
+	// Check diagonals (TR to BL)
+	for (int i = 0; validMove(lastMove.first - i, lastMove.second + i); i++) {
+		if (board[lastMove.first - i][lastMove.second + i] != currentTurn)
+			break;
+		n++;
+		if (n >= CONNECT_COUNT) return true;
+	}
+
+	for (int i = 1; validMove(lastMove.first + i, lastMove.second - i); i++) {
+		if (board[lastMove.first + i][lastMove.second - i] != currentTurn)
+			break;
+		if (n >= CONNECT_COUNT) return true;
+	}
+	return false;
+}
+
+std::string Connect4::repeat(std::string s, int n)
+{
+	std::string s1 = "";
+	for (int i = 0; i < n; i++)
+		s1 += s;
+	return s1;
+}
+
+int Connect4::getAIMove() { return miniMax(INT_MIN, INT_MAX); }
+
+int Connect4::miniMax(int alpha, int beta) {
+	if (currentTurn == PLAYER2)
+		return maxValue(alpha, beta, maxDepth - 1).second;
+	else
+		return minValue(alpha, beta, maxDepth - 1).second;
+}
+
+std::pair<int, int> Connect4::minValue(int alpha, int beta, int depth) {
+	if (isGoalState() || depth <= 0) {
+		//int move = (depth <= 0) ? 0 : actions[0];
+		return { utility(), -1 };
+	}
+	std::vector<int> actions = getValidActions();
 	std::pair<int, int> bestMove = { INT_MAX, -1 };
 	for (int move : actions) {
 		int row = nextRow(move);
@@ -282,11 +283,10 @@ std::pair<int, int> Connect4::minValue(int alpha, int beta, int depth) {
 }
 
 std::pair<int, int> Connect4::maxValue(int alpha, int beta, int depth) {
-	std::vector<int> actions = getValidActions();
 	if (isGoalState() || depth <= 0) {
-		int move = (depth <= 0) ? 0 : actions[0];
-		return { utility(), move };
+		return { utility(), -1 };
 	}
+	std::vector<int> actions = getValidActions();
 	std::pair<int, int> bestMove = { INT_MIN, -1 };
 	for (int move : actions) {
 		int row = nextRow(move);
@@ -301,42 +301,24 @@ std::pair<int, int> Connect4::maxValue(int alpha, int beta, int depth) {
 	return bestMove;
 }
 
-int Connect4::getAIMove() {
-	return miniMax(INT_MIN, INT_MAX);
-}
-
-int Connect4::miniMax(int alpha, int beta) {
-	if (currentTurn == PLAYER2) {
-		std::pair<int, int> value = maxValue(alpha, beta, maxDepth-1);
-		winner = NONE;
-		return value.second;
-	}
-	else {
-		std::pair<int, int> value = minValue(alpha, beta, maxDepth-1);
-		winner = NONE;
-		return value.second;
-	}
-}
-
 std::vector<int> Connect4::getValidActions() {
 	std::vector<int> actions;
 	for (int i = 0; i < cols; i++) {
-		if (!board[0][i]) {
+		if (!isDominateMove(i) && !board[0][i])
 			actions.push_back(i);
-		}
 	}
 	return actions;
 }
 
 int Connect4::utility() {
-	if (winner == PLAYER1)
-		return INT_MIN;
-	else if (winner == PLAYER2)
-		return INT_MAX;
-	else if (availableSpaces == 0)
-		return 0;
+	int scorePlayer = nInARow(PLAYER1);
+	int scoreAI = nInARow(PLAYER2);
 
-	return nInARow(PLAYER2) - (nInARow(PLAYER1) * 10);
+	if (scorePlayer == INT_MIN) return scorePlayer;
+	else if (scoreAI == INT_MAX) return scoreAI;
+	else if (availableSpaces == 0) return availableSpaces;
+	
+	return scoreAI - scorePlayer;
 }
 
 int Connect4::nInARow(Actor actor) {
@@ -347,17 +329,14 @@ int Connect4::nInARow(Actor actor) {
 		for (int j = 0; j < rows - 3; j++) {
 			int n = 0;
 			int emptyCells = 0;
-			bool isBlocked = false;
 			for (int k = 0; k < 4; k++) {
 				if (board[j + k][i] == actor) n++;
 				else if (board[j + k][i] == 0) emptyCells++;
-				else {
-					isBlocked = true;
-					break;
-				}
+				else break;
 			}
-			if (n == 3 && emptyCells == 1 && !isBlocked) score += 100;
-			else if (n == 2 && emptyCells == 2 && !isBlocked) score += 10;
+			if (n == 4) return (actor == 2) ? INT_MAX : INT_MIN; // Immediately return
+			else if (n == 3 && emptyCells == 1) score += 1000;
+			else if (n == 2 && emptyCells == 2) score += 10;
 		}
 	}
 
@@ -366,17 +345,14 @@ int Connect4::nInARow(Actor actor) {
 		for (int j = 0; j < cols - 3; j++) {
 			int n = 0;
 			int emptyCells = 0;
-			bool isBlocked = false;
 			for (int k = 0; k < 4; k++) {
 				if (board[i][j + k] == actor) n++;
 				else if (board[i][j + k] == 0) emptyCells++;
-				else {
-					isBlocked = true;
-					break;
-				}
+				else break;
 			}
-			if (n == 3 && emptyCells == 1 && !isBlocked) score += 100;
-			else if (n == 2 && emptyCells == 2 && !isBlocked) score += 10;
+			if (n == 4) return (actor == 2) ? INT_MAX : INT_MIN; // Immediately return
+			else if (n == 3 && emptyCells == 1) score += 1000;
+			else if (n == 2 && emptyCells == 2) score += 10;
 		}
 	}
 
@@ -385,31 +361,25 @@ int Connect4::nInARow(Actor actor) {
 		for (int j = 0; j < cols - 3; j++) {
 			int n = 0;
 			int emptyCells = 0;
-			bool isBlocked = false;
 			for (int k = 0; k < 4; k++) {
 				if (board[i + k][j + k] == actor) n++;
 				else if (board[i + k][j + k] == 0) emptyCells++;
-				else {
-					isBlocked = true;
-					break;
-				}
+				else break;
 			}
-			if (n == 3 && emptyCells == 1 && !isBlocked) score += 100;
-			else if (n == 2 && emptyCells == 2 && !isBlocked) score += 10;
+			if (n == 4) return (actor == 2) ? INT_MAX : INT_MIN; // Immediately return
+			else if (n == 3 && emptyCells == 1) score += 1000;
+			else if (n == 2 && emptyCells == 2) score += 10;
 
 			n = 0;
 			emptyCells = 0;
-			isBlocked = false;
 			for (int k = 0; k < 4; k++) {
 				if (board[i + k][j + 3 - k] == actor) n++;
 				else if (board[i + k][j + 3 - k] == 0) emptyCells++;
-				else {
-					isBlocked = true;
-					break;
-				}
+				else break;
 			}
-			if (n == 3 && emptyCells == 1 && !isBlocked) score += 100;
-			else if (n == 2 && emptyCells == 2 && !isBlocked) score += 10;
+			if (n == 4) return (actor == 2) ? INT_MAX : INT_MIN; // Immediately return
+			else if (n == 3 && emptyCells == 1) score += 1000;
+			else if (n == 2 && emptyCells == 2) score += 10;
 		}
 	}
 

@@ -1,3 +1,8 @@
+// 
+// connect-four.h
+// Jake Buhite and Nick Abegg
+// 10/20/2023
+//
 #pragma once
 #include <iostream>
 #include <string>

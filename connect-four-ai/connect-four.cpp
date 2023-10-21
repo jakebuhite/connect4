@@ -1,3 +1,8 @@
+// 
+// connect-four.cpp
+// Jake Buhite and Nick Abegg
+// 10/20/2023
+//
 #include "connect-four.h"
 
 Connect4::Connect4() {
@@ -55,6 +60,7 @@ void Connect4::beginPvP() {
 	int choice = 0;
 
 	// Main game loop
+	printBoard();
 	while (!isGoalState()) {
 		currentTurn = (currentTurn == PLAYER1) ? PLAYER2 : PLAYER1;
 		std::cout << "It is now " << actors[currentTurn] << " turn. Please select a column: ";
@@ -78,6 +84,7 @@ void Connect4::beginPvA() {
 	int choice = 0;
 
 	// Main game loop
+	printBoard();
 	while (!isGoalState()) {
 		currentTurn = (currentTurn == PLAYER1) ? PLAYER2 : PLAYER1;
 		std::cout << "It is now " << actors[currentTurn] << " turn. Please select a column: ";
@@ -107,6 +114,7 @@ void Connect4::beginAvA() {
 	int choice = 0;
 
 	// Main game loop
+	printBoard();
 	while (!isGoalState()) {
 		currentTurn = (currentTurn == PLAYER1) ? PLAYER2 : PLAYER1;
 		std::cout << "It is now " << actors[currentTurn] << " turn. Please select a column: " << std::endl;
@@ -160,6 +168,7 @@ void Connect4::printBoard() {
 			result += (!board[i][j]) ? "   |" : " " + std::to_string(board[i][j]) + " |";
 		result += "\n+" + repeat("---+", cols) + '\n';
 	}
+	result += "| 0 | 1 | 2 | 3 | 4 | 5 | 6 |\n";
 	std::cout << result;
 }
 
@@ -263,11 +272,11 @@ int Connect4::miniMax(int alpha, int beta) {
 }
 
 std::pair<int, int> Connect4::minValue(int alpha, int beta, int depth) {
+	std::vector<int> actions = getValidActions();
 	if (isGoalState() || depth <= 0) {
 		//int move = (depth <= 0) ? 0 : actions[0];
-		return { utility(), -1 };
+		return { utility(), actions[0] };
 	}
-	std::vector<int> actions = getValidActions();
 	std::pair<int, int> bestMove = { INT_MAX, -1 };
 	for (int move : actions) {
 		int row = nextRow(move);
@@ -283,10 +292,10 @@ std::pair<int, int> Connect4::minValue(int alpha, int beta, int depth) {
 }
 
 std::pair<int, int> Connect4::maxValue(int alpha, int beta, int depth) {
-	if (isGoalState() || depth <= 0) {
-		return { utility(), -1 };
-	}
 	std::vector<int> actions = getValidActions();
+	if (isGoalState() || depth <= 0) {
+		return { utility(), actions[0] };
+	}
 	std::pair<int, int> bestMove = { INT_MIN, -1 };
 	for (int move : actions) {
 		int row = nextRow(move);
@@ -307,6 +316,7 @@ std::vector<int> Connect4::getValidActions() {
 		if (!isDominateMove(i) && !board[0][i])
 			actions.push_back(i);
 	}
+	if (actions.empty()) return { -1 };
 	return actions;
 }
 

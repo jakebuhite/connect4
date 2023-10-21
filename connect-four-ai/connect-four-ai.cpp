@@ -1,7 +1,7 @@
 // 
 // connect-four-ai.cpp
 // Jake Buhite and Nick Abegg
-// 10/17/2023
+// 10/20/2023
 //
 #include <iostream>
 #include "connect-four.h"
@@ -20,7 +20,7 @@ int main()
 
     Connect4* game = new Connect4(rows, cols, depth);
     //game->beginPvP();
-    //game->beginPvA();
+    game->beginPvA();
     //game->beginAvA();
     delete game;
 }

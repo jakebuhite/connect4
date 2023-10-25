@@ -8,7 +8,8 @@
 #include <string>
 #include <vector>
 
-constexpr auto CONNECT_COUNT = 4;
+constexpr auto AI_WIN = 9999999;
+constexpr auto PLAYER_WIN = -9999999;
 
 enum Actor { NONE = 0, PLAYER1 = 1, PLAYER2 = 2 /* AI */ };
 
@@ -49,7 +50,7 @@ private:
 	std::pair<int, int> minValue(int alpha, int beta, int depth);
 	std::pair<int, int> maxValue(int alpha, int beta, int depth);
 	std::vector<int> getValidActions();
-	int utility();
+	int utility(int depth);
 	int nInARow(Actor actor);
 public:
 	// Constructors

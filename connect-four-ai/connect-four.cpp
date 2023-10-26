@@ -7,10 +7,9 @@
 
 Connect4::Connect4() { initBoard(); }
 
-Connect4::Connect4(int rows, int cols, int d) {
+Connect4::Connect4(int rows, int cols) {
 	this->rows = rows;
 	this->cols = cols;
-	maxDepth = d;
 	availableSpaces = rows * cols;
 	initBoard();
 }
@@ -41,80 +40,6 @@ void Connect4::initBoard() {
 	for (int i = 0; i < rows; i++)
 		for (int j = 0; j < cols; j++)
 			board[i][j] = 0;
-}
-
-void Connect4::beginPvP() {
-	std::string actors[] = { "NONE", "PLAYER 1", "PLAYER 2" };
-	int choice = 0;
-
-	// Main game loop
-	printBoard();
-	while (!isGoalState()) {
-		currentTurn = (currentTurn == PLAYER1) ? PLAYER2 : PLAYER1;
-		std::cout << "It is now " << actors[currentTurn] << " turn. Please select a column: ";
-		std::cin >> choice;
-		while (isDominateMove(choice)) {
-			std::cout << "ERROR: Please pick a non-dominate move for the first round: ";
-			std::cin >> choice;
-		}
-		int row = nextRow(choice);
-		addDisc(row, choice);
-		printBoard();
-		if (currentTurn == PLAYER2)
-			round++;
-	}
-	winner = currentTurn;
-	std::cout << "And the winner is... " << actors[winner] << "!" << std::endl;
-}
-
-void Connect4::beginPvA() {
-	std::string actors[] = { "NONE", "PLAYER 1", "AI" };
-	int choice = 0;
-
-	// Main game loop
-	printBoard();
-	while (!isGoalState()) {
-		currentTurn = (currentTurn == PLAYER1) ? PLAYER2 : PLAYER1;
-		std::cout << "It is now " << actors[currentTurn] << " turn. Please select a column: ";
-		if (currentTurn == PLAYER1) {
-			std::cin >> choice;
-			while (isDominateMove(choice)) {
-				std::cout << "ERROR: Please pick a non-dominate move for the first round: ";
-				std::cin >> choice;
-			}
-		}
-		else {
-			std::cout << std::endl;
-			choice = getAIMove();
-		}
-		int row = nextRow(choice);
-		addDisc(row, choice);
-		printBoard();
-		if (currentTurn == PLAYER2)
-			round++;
-	}
-	winner = currentTurn;
-	std::cout << "And the winner is... " << actors[winner] << "!" << std::endl;
-}
-
-void Connect4::beginAvA() {
-	std::string actors[] = { "NONE", "PLAYER 1", "PLAYER 2" };
-	int choice = 0;
-
-	// Main game loop
-	printBoard();
-	while (!isGoalState()) {
-		currentTurn = (currentTurn == PLAYER1) ? PLAYER2 : PLAYER1;
-		std::cout << "It is now " << actors[currentTurn] << " turn. Please select a column: " << std::endl;
-		choice = getAIMove();
-		int row = nextRow(choice);
-		addDisc(row, choice);
-		printBoard();
-		if (currentTurn == PLAYER2)
-			round++;
-	}
-	winner = currentTurn;
-	std::cout << "And the winner is... " << actors[winner] << "!" << std::endl;
 }
 
 void Connect4::addDisc(int row, int col) {
@@ -249,132 +174,38 @@ std::string Connect4::repeat(std::string s, int n)
 	return ans;
 }
 
-int Connect4::getAIMove() { return miniMax(PLAYER_WIN, AI_WIN); }
-
-int Connect4::miniMax(int alpha, int beta) {
-	if (currentTurn == PLAYER2)
-		return maxValue(alpha, beta, maxDepth - 1).second;
-	else
-		return minValue(alpha, beta, maxDepth - 1).second;
+void Connect4::incrementRound() { 
+	round++; 
 }
 
-std::pair<int, int> Connect4::minValue(int alpha, int beta, int depth) {
-	std::vector<int> actions = getValidActions();
-	if (isGoalState() || depth <= 0)
-		return { utility(depth), actions[0] };
-	std::pair<int, int> bestMove = { AI_WIN, -1 };
-	for (int move : actions) {
-		int row = nextRow(move);
-		addDisc(row, move, PLAYER1);
-		int newValue = maxValue(alpha, beta, depth - 1).first;
-		removeDisc(row, move);
-		if (newValue < bestMove.first)
-			bestMove = { newValue, move };
-		beta = std::min(beta, newValue);
-		if (alpha >= beta) break;
-	}
-	return bestMove;
+void Connect4::setWinner(Actor a) {
+	winner = a;
 }
 
-std::pair<int, int> Connect4::maxValue(int alpha, int beta, int depth) {
-	std::vector<int> actions = getValidActions();
-	if (isGoalState() || depth <= 0)
-		return { utility(depth), actions[0] };
-	std::pair<int, int> bestMove = { PLAYER_WIN, -1 };
-	for (int move : actions) {
-		int row = nextRow(move);
-		addDisc(row, move, PLAYER2);
-		int newValue = minValue(alpha, beta, depth - 1).first;
-		removeDisc(row, move);
-		if (newValue > bestMove.first)
-			bestMove = { newValue, move };
-		alpha = std::max(alpha, newValue);
-		if (alpha >= beta) break;
-	}
-	return bestMove;
+Actor Connect4::getWinner() {
+	return winner;
 }
 
-std::vector<int> Connect4::getValidActions() {
-	std::vector<int> actions;
-	for (int i = 0; i < cols; i++)
-		if (!isDominateMove(i) && !board[0][i])
-			actions.push_back(i);
-	if (actions.empty()) return { -1 };
-	return actions;
+Actor Connect4::getCurrentTurn() {
+	return currentTurn;
 }
 
-int Connect4::utility(int depth) {
-	int scorePlayer = nInARow(PLAYER1);
-	int scoreAI = nInARow(PLAYER2);
-
-	if (scorePlayer == PLAYER_WIN) return scorePlayer - depth;
-	else if (scoreAI == AI_WIN) return scoreAI + depth;
-	else if (availableSpaces == 0) return availableSpaces;
-	
-	return (scoreAI - scorePlayer);
+void Connect4::setCurrentTurn(Actor a) {
+	currentTurn = a;
 }
 
-int Connect4::nInARow(Actor actor) {
-	int score = 0;
+int Connect4::getAvailableSpaces() {
+	return availableSpaces;
+}
 
-	// Check vertical n in a row
-	for (int i = 0; i < cols; i++) {
-		for (int j = 0; j < rows - 3; j++) {
-			int n = 0;
-			int emptyCells = 0;
-			for (int k = 0; k < 4; k++) {
-				if (board[j + k][i] == actor) n++;
-				else if (board[j + k][i] == 0) emptyCells++;
-				else break;
-			}
-			if (n == 4) return (actor == 2) ? AI_WIN : PLAYER_WIN; // Immediately return
-			else if (n == 3 && emptyCells == 1) score += 1000;
-			else if (n == 2 && emptyCells == 2) score += 10;
-		}
-	}
+int Connect4::getCell(int x, int y) {
+	return board[x][y];
+}
 
-	// Check horizontal n in a row
-	for (int i = 0; i < rows; i++) {
-		for (int j = 0; j < cols - 3; j++) {
-			int n = 0;
-			int emptyCells = 0;
-			for (int k = 0; k < 4; k++) {
-				if (board[i][j + k] == actor) n++;
-				else if (board[i][j + k] == 0) emptyCells++;
-				else break;
-			}
-			if (n == 4) return (actor == 2) ? AI_WIN : PLAYER_WIN; // Immediately return
-			else if (n == 3 && emptyCells == 1) score += 1000;
-			else if (n == 2 && emptyCells == 2) score += 10;
-		}
-	}
+int Connect4::getRows() {
+	return rows;
+}
 
-	// Check diagonal n in a row
-	for (int i = 0; i < rows - 3; i++) {
-		for (int j = 0; j < cols - 3; j++) {
-			int n = 0;
-			int emptyCells = 0;
-			for (int k = 0; k < 4; k++) {
-				if (board[i + k][j + k] == actor) n++;
-				else if (board[i + k][j + k] == 0) emptyCells++;
-				else break;
-			}
-			if (n == 4) return (actor == 2) ? AI_WIN : PLAYER_WIN; // Immediately return
-			else if (n == 3 && emptyCells == 1) score += 1000;
-			else if (n == 2 && emptyCells == 2) score += 10;
-
-			n = 0;
-			emptyCells = 0;
-			for (int k = 0; k < 4; k++) {
-				if (board[i + k][j + 3 - k] == actor) n++;
-				else if (board[i + k][j + 3 - k] == 0) emptyCells++;
-				else break;
-			}
-			if (n == 4) return (actor == 2) ? AI_WIN : PLAYER_WIN; // Immediately return
-			else if (n == 3 && emptyCells == 1) score += 1000;
-			else if (n == 2 && emptyCells == 2) score += 10;
-		}
-	}
-
-	return score;
+int Connect4::getCols() {
+	return cols;
 }

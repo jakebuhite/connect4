@@ -98,114 +98,71 @@ bool Connect4::isDominateMove(int col) { return round == 1 && (col == 0 || (cols
 
 bool Connect4::isGoalState() {
 	int n = 0;
+	int row = lastMove.first;
+	int col = lastMove.second;
 
-	// Check if the board has filled
-	if (availableSpaces == 0) {
-		currentTurn = NONE;
-		return true;
-	}
-
-	// Check up and down
-	for (int i = lastMove.first; i >= 0; i--) {
-		if (board[i][lastMove.second] != currentTurn)
-			break;
-		n++;
-		if (n >= 4) return true;
-	}
-	for (int i = lastMove.first + 1; i < rows; i++) {
-		if (board[i][lastMove.second] != currentTurn)
-			break;
-		n++;
-		if (n >= 4) return true;
+	// Check horizontally
+	int start = std::max(col - 3, 0);
+	int end = std::min(cols - 4, col) + 1;
+	for (int i = start; i < end; i++) {
+		int cell = board[row][i];
+		if (cell != 0 && cell == board[row][i + 1] && cell == board[row][i + 2] && cell == board[row][i + 3]) 
+			return true;
 	}
 
-	n = 0;
-	// Check left and right
-	for (int i = lastMove.second; i >= 0; i--) {
-		if (board[lastMove.first][i] != currentTurn)
-			break;
-		n++;
-		if (n >= 4) return true;
-	}
-	for (int i = lastMove.second + 1; i < cols; i++) {
-		if (board[lastMove.first][i] != currentTurn)
-			break;
-		n++;
-		if (n >= 4) return true;
+	// Check vertically
+	start = std::max(row - 3, 0);
+	end = std::min(rows - 4, col) + 1;
+	for (int i = start; i < end; i++) {
+		int cell = board[i][col];
+		if (cell != 0 && cell == board[i + 1][col] && cell == board[i + 2][col] && cell == board[i + 3][col])
+			return true;
 	}
 
-	n = 0;
-	// Check diagonals (TL to BR)
-	for (int i = 0; validMove(lastMove.first + i, lastMove.second + i); i++) {
-		if (board[lastMove.first + i][lastMove.second + i] != currentTurn)
-			break;
-		n++;
-		if (n >= 4) return true;
-	}
-	for (int i = 1; validMove(lastMove.first - i, lastMove.second - i); i++) {
-		if (board[lastMove.first - i][lastMove.second - i] != currentTurn)
-			break;
-		n++;
-		if (n >= 4) return true;
+	// Check diagonally (left to right)
+	for (int i = 0; i <= 3; i++) {
+		if (validMove(row + i, col + i) && validMove(row + i - 3, col + i - 3)) {
+			int cell = board[row + i][col + i];
+			if (cell != 0 && cell == board[row + i - 1][col + i - 1] && cell == board[row + i - 2][col + i - 2] && cell == board[row + i - 3][col + i - 3])
+				return true;
+		}
 	}
 
-	n = 0;
-	// Check diagonals (TR to BL)
-	for (int i = 0; validMove(lastMove.first - i, lastMove.second + i); i++) {
-		if (board[lastMove.first - i][lastMove.second + i] != currentTurn)
-			break;
-		n++;
-		if (n >= 4) return true;
+	// Check diagonally (right to left)
+	for (int i = 0; i <= 3; i++) {
+		if (validMove(row + i, col - i) && validMove(row + i - 3, col - i + 3)) {
+			int cell = board[row + i][col - i];
+			if (cell != 0 && cell == board[row + i - 1][col - i + 1] && cell == board[row + i - 2][col - i + 2] && cell == board[row + i - 3][col - i + 3])
+				return true;
+		}
 	}
 
-	for (int i = 1; validMove(lastMove.first + i, lastMove.second - i); i++) {
-		if (board[lastMove.first + i][lastMove.second - i] != currentTurn)
-			break;
-		if (n >= 4) return true;
-	}
 	return false;
 }
 
-std::string Connect4::repeat(std::string s, int n)
-{
+std::string Connect4::repeat(std::string s, int n) {
 	std::string ans = "";
 	for (int i = 0; i < n; i++)
 		ans += s;
 	return ans;
 }
 
-void Connect4::incrementRound() { 
-	round++; 
-}
+void Connect4::incrementRound() { round++; }
 
-void Connect4::setWinner(Actor a) {
-	winner = a;
-}
+void Connect4::setWinner(Actor a) { winner = a; }
 
-Actor Connect4::getWinner() {
-	return winner;
-}
+Actor Connect4::getWinner() { return winner; }
 
-Actor Connect4::getCurrentTurn() {
-	return currentTurn;
-}
+Actor Connect4::getCurrentTurn() { return currentTurn; }
 
-void Connect4::setCurrentTurn(Actor a) {
-	currentTurn = a;
-}
+void Connect4::setCurrentTurn(Actor a) { currentTurn = a; }
 
-int Connect4::getAvailableSpaces() {
-	return availableSpaces;
-}
+int Connect4::getAvailableSpaces() { return availableSpaces; }
 
-int Connect4::getCell(int x, int y) {
-	return board[x][y];
-}
+int Connect4::getCell(int x, int y) { return board[x][y]; }
 
-int Connect4::getRows() {
-	return rows;
-}
+int Connect4::getRows() { return rows; }
 
-int Connect4::getCols() {
-	return cols;
-}
+int Connect4::getCols() { return cols; }
+
+std::pair<int, int> Connect4::getLastTurn() { return lastMove; }

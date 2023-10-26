@@ -24,9 +24,9 @@ int main()
 
     Connect4* game = new Connect4(rows, cols);
 	MiniMax* agent = new MiniMax(game, depth);
-    //beginPvP();
+    //beginPvP(game);
     beginPvA(game, agent);
-    //beginAvA();
+    //beginAvA(game, agent);
     delete game;
 }
 
@@ -92,7 +92,7 @@ void beginAvA(Connect4* game, MiniMax* agent) {
 	game->printBoard();
 	while (!game->isGoalState()) {
 		game->setCurrentTurn((game->getCurrentTurn() == PLAYER1) ? PLAYER2 : PLAYER1);
-		std::cout << "It is now " << actors[game->getCurrentTurn()] << " turn. Please select a column: ";
+		std::cout << "It is now " << actors[game->getCurrentTurn()] << " turn." << std::endl;
 		choice = agent->getAIMove();
 		int row = game->nextRow(choice);
 		game->addDisc(row, choice);

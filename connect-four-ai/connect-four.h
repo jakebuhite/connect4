@@ -57,4 +57,5 @@ public:
 	int getCell(int x, int y);
 	int getRows();
 	int getCols();
+	std::pair<int, int> getLastTurn();
 };

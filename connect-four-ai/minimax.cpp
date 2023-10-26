@@ -5,40 +5,26 @@
 //
 #include "minimax.h"
 
-MiniMax::MiniMax() {
-	game = nullptr;
-}
+MiniMax::MiniMax() { game = nullptr; }
 
-MiniMax::MiniMax(Connect4* game) {
-	this->game = game;
-}
+MiniMax::MiniMax(Connect4* game) { this->game = game; }
 
-MiniMax::MiniMax(Connect4* game, int depth) {
-	this->game = game;
-	maxDepth = depth;
-}
+MiniMax::MiniMax(Connect4* game, int depth) : MiniMax(game) { maxDepth = depth; }
 
-int MiniMax::getAIMove() { return miniMax(PLAYER_WIN, AI_WIN); }
+int MiniMax::getAIMove() { return miniMax(INT_MIN, INT_MAX); }
 
-int MiniMax::miniMax(int alpha, int beta) {
-	if (game->getCurrentTurn() == PLAYER2)
-		return maxValue(alpha, beta, maxDepth - 1).second;
-	else
-		return minValue(alpha, beta, maxDepth - 1).second;
-}
+int MiniMax::miniMax(int alpha, int beta) { return (game->getCurrentTurn() == PLAYER2) ? maxValue(alpha, beta, maxDepth - 1).second : minValue(alpha, beta, maxDepth - 1).second; }
 
 std::pair<int, int> MiniMax::minValue(int alpha, int beta, int depth) {
 	std::vector<int> actions = getValidActions();
-	if (game->isGoalState() || depth <= 0)
-		return { utility(depth), actions[0] };
-	std::pair<int, int> bestMove = { AI_WIN, -1 };
+	if (game->isGoalState() || depth <= 0) return { utility(depth), -1 };
+	std::pair<int, int> bestMove = { AI_WIN, actions[0] };
 	for (int move : actions) {
 		int row = game->nextRow(move);
 		game->addDisc(row, move, PLAYER1);
 		int newValue = maxValue(alpha, beta, depth - 1).first;
 		game->removeDisc(row, move);
-		if (newValue < bestMove.first)
-			bestMove = { newValue, move };
+		if (newValue < bestMove.first) bestMove = { newValue, move };
 		beta = std::min(beta, newValue);
 		if (alpha >= beta) break;
 	}
@@ -47,16 +33,14 @@ std::pair<int, int> MiniMax::minValue(int alpha, int beta, int depth) {
 
 std::pair<int, int> MiniMax::maxValue(int alpha, int beta, int depth) {
 	std::vector<int> actions = getValidActions();
-	if (game->isGoalState() || depth <= 0)
-		return { utility(depth), actions[0] };
-	std::pair<int, int> bestMove = { PLAYER_WIN, -1 };
+	if (game->isGoalState() || depth <= 0) return { utility(depth), -1 };
+	std::pair<int, int> bestMove = { PLAYER_WIN, actions[0] };
 	for (int move : actions) {
 		int row = game->nextRow(move);
 		game->addDisc(row, move, PLAYER2);
 		int newValue = minValue(alpha, beta, depth - 1).first;
 		game->removeDisc(row, move);
-		if (newValue > bestMove.first)
-			bestMove = { newValue, move };
+		if (newValue > bestMove.first) bestMove = { newValue, move };
 		alpha = std::max(alpha, newValue);
 		if (alpha >= beta) break;
 	}
@@ -77,7 +61,7 @@ int MiniMax::utility(int depth) {
 	int scoreAI = nInARow(PLAYER2);
 
 	if (scorePlayer == PLAYER_WIN) return scorePlayer - depth;
-	else if (scoreAI == AI_WIN) return scoreAI + depth;
+	else if (scoreAI == AI_WIN) { return scoreAI + depth; }
 	else if (game->getAvailableSpaces() == 0) return 0;
 
 	return (scoreAI - scorePlayer);

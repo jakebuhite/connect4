@@ -1,3 +1,8 @@
+// 
+// minimax.cpp
+// Jake Buhite and Nick Abegg
+// 10/26/2023
+//
 #include "minimax.h"
 
 MiniMax::MiniMax() {

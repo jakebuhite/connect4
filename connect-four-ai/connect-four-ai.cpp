@@ -1,9 +1,8 @@
 // 
 // connect-four-ai.cpp
 // Jake Buhite and Nick Abegg
-// 10/20/2023
+// 10/26/2023
 //
-#include <iostream>
 #include "connect-four.h"
 #include "minimax.h"
 

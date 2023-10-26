@@ -1,7 +1,7 @@
 // 
 // connect-four.cpp
 // Jake Buhite and Nick Abegg
-// 10/20/2023
+// 10/26/2023
 //
 #include "connect-four.h"
 

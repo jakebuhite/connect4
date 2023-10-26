@@ -4,8 +4,6 @@
 // 10/26/2023
 //
 #pragma once
-#include <vector>
-#include "actor.h"
 #include "connect-four.h"
 
 class MiniMax {

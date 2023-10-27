@@ -164,5 +164,3 @@ int Connect4::getCell(int x, int y) { return board[x][y]; }
 int Connect4::getRows() { return rows; }
 
 int Connect4::getCols() { return cols; }
-
-std::pair<int, int> Connect4::getLastTurn() { return lastMove; }

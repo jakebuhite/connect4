@@ -4,9 +4,10 @@
 // 10/26/2023
 //
 #pragma once
+#include "agent.h"
 #include "connect-four.h"
 
-class MiniMax {
+class MiniMax : public Agent {
 private:
 	int maxDepth = 6;
 	Connect4* game;
@@ -22,5 +23,5 @@ public:
 	MiniMax(Connect4* game);
 	MiniMax(Connect4* game, int depth);
 
-	int getAIMove();
+	int getAgentMove();
 };

@@ -11,7 +11,7 @@ MiniMax::MiniMax(Connect4* game) { this->game = game; }
 
 MiniMax::MiniMax(Connect4* game, int depth) : MiniMax(game) { maxDepth = depth; }
 
-int MiniMax::getAIMove() { return miniMax(INT_MIN, INT_MAX); }
+int MiniMax::getAgentMove() { return miniMax(INT_MIN, INT_MAX); }
 
 int MiniMax::miniMax(int alpha, int beta) { return (game->getCurrentTurn() == PLAYER2) ? maxValue(alpha, beta, maxDepth - 1).second : minValue(alpha, beta, maxDepth - 1).second; }
 
@@ -82,7 +82,7 @@ int MiniMax::nInARow(Actor actor) {
 				else if (game->getCell(j + k, i) == 0) emptyCells++;
 				else break;
 			}
-			if (n == 4) return (actor == 2) ? AI_WIN : PLAYER_WIN; // Immediately return
+			if (n == 4) return (actor == 2) ? AI_WIN : PLAYER_WIN;
 			else if (n == 3 && emptyCells == 1) score += 1000;
 			else if (n == 2 && emptyCells == 2) score += 10;
 		}
@@ -98,7 +98,7 @@ int MiniMax::nInARow(Actor actor) {
 				else if (game->getCell(i, j + k) == 0) emptyCells++;
 				else break;
 			}
-			if (n == 4) return (actor == 2) ? AI_WIN : PLAYER_WIN; // Immediately return
+			if (n == 4) return (actor == 2) ? AI_WIN : PLAYER_WIN;
 			else if (n == 3 && emptyCells == 1) score += 1000;
 			else if (n == 2 && emptyCells == 2) score += 10;
 		}
@@ -114,7 +114,7 @@ int MiniMax::nInARow(Actor actor) {
 				else if (game->getCell(i + k, j + k) == 0) emptyCells++;
 				else break;
 			}
-			if (n == 4) return (actor == 2) ? AI_WIN : PLAYER_WIN; // Immediately return
+			if (n == 4) return (actor == 2) ? AI_WIN : PLAYER_WIN;
 			else if (n == 3 && emptyCells == 1) score += 1000;
 			else if (n == 2 && emptyCells == 2) score += 10;
 
@@ -125,7 +125,7 @@ int MiniMax::nInARow(Actor actor) {
 				else if (game->getCell(i + k, j + 3 - k) == 0) emptyCells++;
 				else break;
 			}
-			if (n == 4) return (actor == 2) ? AI_WIN : PLAYER_WIN; // Immediately return
+			if (n == 4) return (actor == 2) ? AI_WIN : PLAYER_WIN;
 			else if (n == 3 && emptyCells == 1) score += 1000;
 			else if (n == 2 && emptyCells == 2) score += 10;
 		}

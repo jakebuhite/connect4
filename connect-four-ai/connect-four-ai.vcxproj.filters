@@ -24,6 +24,9 @@
     <ClCompile Include="minimax.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tdl-agent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="connect-four.h">
@@ -33,6 +36,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="actor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tdl-agent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="agent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

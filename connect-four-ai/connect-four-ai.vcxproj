@@ -130,11 +130,14 @@
     <ClCompile Include="connect-four-ai.cpp" />
     <ClCompile Include="connect-four.cpp" />
     <ClCompile Include="minimax.cpp" />
+    <ClCompile Include="tdl-agent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="actor.h" />
+    <ClInclude Include="agent.h" />
     <ClInclude Include="connect-four.h" />
     <ClInclude Include="minimax.h" />
+    <ClInclude Include="tdl-agent.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include "actor.h"
 
 constexpr auto AI_WIN = 9999999;
@@ -57,4 +58,18 @@ public:
 	int getCell(int x, int y);
 	int getRows();
 	int getCols();
+
+	// Added from TDL
+	int** getBoard();
+	void setBoard(int** board);
+
+	void resetBoard();
+	int** getMirroredField(int** board);
+	bool isDraw();
+	bool canWin(int player, int col, int row);
+	bool isMatchingBoard(int player, std::vector<int> winningPositions);
+	std::vector<int> generateTDLMoves(int player);
+
+	std::pair<int, int> getLastMove();
+	void setLastMove(std::pair<int, int> p);
 };

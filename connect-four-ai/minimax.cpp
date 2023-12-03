@@ -7,13 +7,25 @@
 
 MiniMax::MiniMax() { game = nullptr; }
 
-MiniMax::MiniMax(Connect4* game) { this->game = game; }
+MiniMax::MiniMax(Connect4* game) { 
+	this->game = game; 
+	generateOptimalMoveOrder();
+}
 
 MiniMax::MiniMax(Connect4* game, int depth) : MiniMax(game) { maxDepth = depth; }
 
 int MiniMax::getAgentMove() { return miniMax(INT_MIN, INT_MAX); }
 
-int MiniMax::miniMax(int alpha, int beta) { return (game->getCurrentTurn() == PLAYER2) ? maxValue(alpha, beta, maxDepth - 1).second : minValue(alpha, beta, maxDepth - 1).second; }
+int MiniMax::miniMax(int alpha, int beta) { 
+	std::pair<int, int> move;
+	if (game->getCurrentTurn() == PLAYER2) {
+		move = maxValue(alpha, beta, maxDepth - 1);
+	}
+	else {
+		move = minValue(alpha, beta, maxDepth - 1);
+	}
+	return move.second;
+}
 
 std::pair<int, int> MiniMax::minValue(int alpha, int beta, int depth) {
 	std::vector<int> actions = getValidActions();
@@ -49,9 +61,9 @@ std::pair<int, int> MiniMax::maxValue(int alpha, int beta, int depth) {
 
 std::vector<int> MiniMax::getValidActions() {
 	std::vector<int> actions;
-	for (int i = 0; i < game->getCols(); i++)
-		if (!game->isDominateMove(i) && !game->getCell(0, i))
-			actions.push_back(i);
+	for (int i = 0; i < optimalMoveOrder.size(); i++)
+		if (!game->isDominateMove(optimalMoveOrder[i]) && !game->getCell(0, optimalMoveOrder[i]))
+			actions.push_back(optimalMoveOrder[i]);
 	if (actions.empty()) return { -1 };
 	return actions;
 }
@@ -132,4 +144,15 @@ int MiniMax::nInARow(Actor actor) {
 	}
 
 	return score;
+}
+
+void MiniMax::generateOptimalMoveOrder() {
+	// Start with the center column
+	int middle = game->getCols() / 2;
+	optimalMoveOrder.push_back(middle);
+
+	for (int i = 1; i <= middle; i++) {
+		optimalMoveOrder.push_back(middle - i);
+		optimalMoveOrder.push_back(middle + i);
+	}
 }

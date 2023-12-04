@@ -53,7 +53,6 @@ std::pair<int, int> MiniMax::maxValue(int alpha, int beta, int depth) {
 		int newValue = minValue(alpha, beta, depth - 1).first;
 		game->removeDisc(row, move);
 		if (newValue > bestMove.first) bestMove = { newValue, move };
-		if (depth == maxDepth) std::cout << "Move: " << move << " Value: " << newValue << std::endl;
 		alpha = std::max(alpha, bestMove.first);
 		if (alpha >= beta) break;
 	}

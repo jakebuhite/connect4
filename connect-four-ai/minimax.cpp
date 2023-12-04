@@ -5,19 +5,19 @@
 //
 #include "minimax.h"
 
-MiniMax::MiniMax() { 
+MiniMax::MiniMax() {
 	game = nullptr;
 	player = PLAYER1;
 	opponent = PLAYER2;
 	maxDepth = 7;
 }
 
-MiniMax::MiniMax(Connect4* game) : MiniMax() { 
-	this->game = game; 
+MiniMax::MiniMax(Connect4* game) : MiniMax() {
+	this->game = game;
 	generateOptimalMoveOrder();
 }
 
-MiniMax::MiniMax(Connect4* game, int depth, Actor player) : MiniMax(game) { 
+MiniMax::MiniMax(Connect4* game, int depth, Actor player) : MiniMax(game) {
 	this->player = player;
 	this->opponent = (player == PLAYER1) ? PLAYER2 : PLAYER1;
 	maxDepth = (depth % 2 == 0) ? (depth - 1) : depth; // Ensure that depth is odd 
@@ -51,6 +51,10 @@ std::pair<int, int> MiniMax::maxValue(int alpha, int beta, int depth) {
 		int row = game->nextRow(move);
 		game->addDisc(row, move, player);
 		int newValue = minValue(alpha, beta, depth - 1).first;
+		if (depth == maxDepth) {
+			game->printBoard();
+			std::cout << "MOVE: " << move << " VALUE: " << newValue << std::endl;
+		}
 		game->removeDisc(row, move);
 		if (newValue > bestMove.first) bestMove = { newValue, move };
 		alpha = std::max(alpha, bestMove.first);
@@ -87,10 +91,10 @@ int MiniMax::nInARow(Actor player) {
 	// Priorize center
 	//std::vector<int> center_array;
 	//for (int i = 0; i < rows; ++i) {
-	//	center_array.push_back(static_cast<int>(game->getCell(i, cols / 2)));
+	//	center_array.push_back(static_cast<int>(game->getCell(i, optimalMoveOrder[0]/*cols / 2*/)));
 	//}
 	//int center_count = std::count(center_array.begin(), center_array.end(), player);
-	//score += center_count * 100;
+	//score += center_count * 800;
 
 	// Check vertical n in a row
 	for (int i = 0; i < cols; i++) {
@@ -104,7 +108,7 @@ int MiniMax::nInARow(Actor player) {
 			}
 			if (n == 4) return (player == this->player) ? AI_WIN : PLAYER_WIN;
 			else if (n == 3 && emptyCells == 1) score += 1000;
-			else if (n == 2 && emptyCells == 2) score += 10;
+			else if (n == 2 && emptyCells == 2) score += 100;
 		}
 	}
 
@@ -120,7 +124,7 @@ int MiniMax::nInARow(Actor player) {
 			}
 			if (n == 4) return (player == this->player) ? AI_WIN : PLAYER_WIN;
 			else if (n == 3 && emptyCells == 1) score += 1000;
-			else if (n == 2 && emptyCells == 2) score += 10;
+			else if (n == 2 && emptyCells == 2) score += 100;
 		}
 	}
 
@@ -136,7 +140,7 @@ int MiniMax::nInARow(Actor player) {
 			}
 			if (n == 4) return (player == this->player) ? AI_WIN : PLAYER_WIN;
 			else if (n == 3 && emptyCells == 1) score += 1000;
-			else if (n == 2 && emptyCells == 2) score += 10;
+			else if (n == 2 && emptyCells == 2) score += 100;
 
 			n = 0;
 			emptyCells = 0;
@@ -147,7 +151,7 @@ int MiniMax::nInARow(Actor player) {
 			}
 			if (n == 4) return (player == this->player) ? AI_WIN : PLAYER_WIN;
 			else if (n == 3 && emptyCells == 1) score += 1000;
-			else if (n == 2 && emptyCells == 2) score += 10;
+			else if (n == 2 && emptyCells == 2) score += 100;
 		}
 	}
 
@@ -155,17 +159,17 @@ int MiniMax::nInARow(Actor player) {
 }
 
 void MiniMax::generateOptimalMoveOrder() {
-	std::vector<int> moves;
+	std::vector<int> moves = { 2, 4, 5, 3, 1, 0, 6 }; //= {2, 3, 4, 1, 5, 0, 6};
 
 	// Add center columns first
-	int center = game->getCols() / 2;
-	moves.push_back(center);
+	//int center = game->getCols() / 2;
+	//moves.push_back(center);
 
-	// Add columns in order relative to their distance to the center column
-	for (int i = 1; i <= center; i++) {
-		moves.push_back(center - i);
-		moves.push_back(center + i);
-	}
+	//// Add columns in order relative to their distance to the center column
+	//for (int i = 1; i <= center; i++) {
+	//	moves.push_back(center - i);
+	//	moves.push_back(center + i);
+	//}
 
 	optimalMoveOrder = moves;
 }

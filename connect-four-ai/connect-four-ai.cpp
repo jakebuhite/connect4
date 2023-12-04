@@ -8,8 +8,8 @@
 #include "tdl-agent.h"
 
 void beginPvP(Connect4* game);
-void beginPvA(Connect4* game, MiniMax* agent);
-void beginAvA(Connect4* game, MiniMax* agent);
+void beginPvA(Connect4* game, MiniMax* agent, int playerTurn);
+void beginAvA(Connect4* game, MiniMax* agent1, MiniMax* agent2);
 int beginTvT(Connect4* game, TDLAgent* agent1, TDLAgent* agent2);
 int beginMvT(Connect4* game, TDLAgent* agent1, Agent* ref);
 void trainTDL();
@@ -18,25 +18,59 @@ int main()
 {
 	int rows = -1;
 	int cols = -1;
-	int depth = 12;
-	
-	std::cout << "Please enter the number of rows: ";
-	std::cin >> rows;
+	int depth = 8;
 
-	std::cout << "Please enter the number of cols: ";
-	std::cin >> cols;
+	char endGame = 'n';
+	int choice = 0;
+	int playerTurn = 0;
+	while (true) {
+		std::cout << "Please enter the number of rows: ";
+		std::cin >> rows;
 
+		std::cout << "Please enter the number of cols: ";
+		std::cin >> cols;
 
-	Connect4* game = new Connect4(rows, cols);
-	MiniMax* agent = new MiniMax(game, depth);
+		std::cout << "Please enter the desired depth: ";
+		std::cin >> depth;
 
-	//beginPvP(game);
-	//beginPvA(game, agent);
-	beginAvA(game, agent);
+		std::cout << "The following options are available.\n[1] Player vs Player\n[2] Player vs AI\n[3] AI vs AI\nPlease enter the desired gamemode (0 to quit): ";
+		std::cin >> choice;
+
+		Connect4* game = new Connect4(rows, cols);
+		MiniMax* agent = nullptr;
+		MiniMax* agent2 = nullptr;
+		switch (choice) {
+		case 1:
+			beginPvP(game);
+			delete game;
+			break;
+		case 2:
+			std::cout << "Do you want to go first (1) or second (2)?: ";
+			std::cin >> playerTurn;
+			agent = (playerTurn == 1) ? new MiniMax(game, depth, PLAYER2) : new MiniMax(game, depth, PLAYER1);
+			beginPvA(game, agent, playerTurn);
+			delete game;
+			delete agent;
+			break;
+		case 3:
+			agent = new MiniMax(game, depth, PLAYER1);
+			agent2 = new MiniMax(game, depth, PLAYER2);
+			beginAvA(game, agent, agent2);
+			delete game;
+			delete agent;
+			delete agent2;
+			break;
+		default:
+			exit(1);
+		}
+
+		std::cout << "Would you like to play again? (y/n): ";
+		std::cin >> endGame;
+
+		if (endGame != 'y') break;
+	}
+	// TODO: Add to menu
 	//trainTDL();
-
-	//delete game;
-	//delete agent;
 }
 
 void beginPvP(Connect4* game) {
@@ -45,7 +79,7 @@ void beginPvP(Connect4* game) {
 
 	// Main game loop
 	game->printBoard();
-	while (!game->isGoalState()) {
+	while (!game->hasWinner() && !game->isDraw()) {
 		game->setCurrentTurn((game->getCurrentTurn() == PLAYER1) ? PLAYER2 : PLAYER1);
 		std::cout << "It is now " << actors[game->getCurrentTurn()] << " turn. Please select a column: ";
 		std::cin >> choice;
@@ -59,20 +93,22 @@ void beginPvP(Connect4* game) {
 		if (game->getCurrentTurn()  == PLAYER2)
 			game->incrementRound();
 	}
-	game->setWinner(game->getCurrentTurn());
-	std::cout << "And the winner is... " << actors[game->getWinner()] << "!" << std::endl;
+	Actor winner = (game->hasWinner()) ? game->getCurrentTurn() : NONE;
+	game->setWinner(winner);
+	std::cout << "And the winner is... " << actors[winner] << "!" << std::endl;
 }
 
-void beginPvA(Connect4* game, MiniMax* agent) {
-	std::string actors[] = { "NONE", "PLAYER 1", "AI" };
+void beginPvA(Connect4* game, MiniMax* agent, int playerTurn) {
+	std::string actors[] = { "NONE", "PLAYER 1", "PLAYER 2" };
 	int choice = 0;
 
 	// Main game loop
 	game->printBoard();
-	while (!game->isGoalState()) {
+	while (!game->hasWinner() && !game->isDraw()) {
 		game->setCurrentTurn((game->getCurrentTurn() == PLAYER1) ? PLAYER2 : PLAYER1);
-		std::cout << "It is now " << actors[game->getCurrentTurn()] << " turn. Please select a column: ";
-		if (game->getCurrentTurn() == PLAYER1) {
+		std::cout << "It is now " << actors[game->getCurrentTurn()] << " turn.";
+		if (game->getCurrentTurn() == playerTurn) {
+			std::cout << "Please select a column: ";
 			std::cin >> choice;
 			while (game->isDominateMove(choice)) {
 				std::cout << "ERROR: Please pick a non-dominate move for the first round: ";
@@ -80,7 +116,7 @@ void beginPvA(Connect4* game, MiniMax* agent) {
 			}
 		}
 		else {
-			std::cout << std::endl;
+			std::cout << " Determining best move..." << std::endl;
 			choice = agent->getAgentMove();
 		}
 		int row = game->nextRow(choice);
@@ -89,28 +125,35 @@ void beginPvA(Connect4* game, MiniMax* agent) {
 		if (game->getCurrentTurn() == PLAYER2)
 			game->incrementRound();
 	}
-	game->setWinner(game->getCurrentTurn());
-	std::cout << "And the winner is... " << actors[game->getWinner()] << "!" << std::endl;
+	Actor winner = (game->hasWinner()) ? game->getCurrentTurn() : NONE;
+	game->setWinner(winner);
+	std::cout << "And the winner is... " << actors[winner] << "!" << std::endl;
 }
 
-void beginAvA(Connect4* game, MiniMax* agent) {
+void beginAvA(Connect4* game, MiniMax* agent1, MiniMax* agent2) {
 	std::string actors[] = { "NONE", "PLAYER 1", "PLAYER 2" };
 	int choice = 0;
 
 	// Main game loop
 	game->printBoard();
-	while (!game->isGoalState()) {
+	while (!game->hasWinner() && !game->isDraw()) {
 		game->setCurrentTurn((game->getCurrentTurn() == PLAYER1) ? PLAYER2 : PLAYER1);
 		std::cout << "It is now " << actors[game->getCurrentTurn()] << " turn." << std::endl;
-		choice = agent->getAgentMove();
+		if (game->getCurrentTurn() == PLAYER1) {
+			choice = agent1->getAgentMove();
+		}
+		else {
+			choice = agent2->getAgentMove();
+		}
 		int row = game->nextRow(choice);
 		game->addDisc(row, choice);
 		game->printBoard();
 		if (game->getCurrentTurn() == PLAYER2)
 			game->incrementRound();
 	}
-	game->setWinner(game->getCurrentTurn());
-	std::cout << "And the winner is... " << actors[game->getWinner()] << "!" << std::endl;
+	Actor winner = (game->hasWinner()) ? game->getCurrentTurn() : NONE;
+	game->setWinner(winner);
+	std::cout << "And the winner is... " << actors[winner] << "!" << std::endl;
 }
 
 int beginTvT(Connect4* game, TDLAgent* agent1, TDLAgent* agent2) {

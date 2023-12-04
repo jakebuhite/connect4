@@ -10,16 +10,13 @@
 #include <algorithm>
 #include "actor.h"
 
-constexpr auto AI_WIN = 9999999;
-constexpr auto PLAYER_WIN = -9999999;
-
 class Connect4 {
 private:
 	// Board
 	int** board;
-	int cols = 7;
-	int rows = 6;
-	int availableSpaces = 42;
+	int cols;
+	int rows;
+	int availableSpaces;
 
 	// Game management
 	int round = 1;
@@ -39,7 +36,7 @@ public:
 
 	// Game Functions
 	void printBoard();
-	bool isGoalState();
+	bool hasWinner();
 	bool isDominateMove(int col);
 	int nextRow(int col);
 

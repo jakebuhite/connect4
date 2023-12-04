@@ -5,35 +5,35 @@
 //
 #include "minimax.h"
 
-MiniMax::MiniMax() { game = nullptr; }
+MiniMax::MiniMax() { 
+	game = nullptr;
+	player = PLAYER1;
+	opponent = PLAYER2;
+	maxDepth = 7;
+}
 
-MiniMax::MiniMax(Connect4* game) { 
+MiniMax::MiniMax(Connect4* game) : MiniMax() { 
 	this->game = game; 
 	generateOptimalMoveOrder();
 }
 
-MiniMax::MiniMax(Connect4* game, int depth) : MiniMax(game) { maxDepth = depth; }
+MiniMax::MiniMax(Connect4* game, int depth, Actor player) : MiniMax(game) { 
+	this->player = player;
+	this->opponent = (player == PLAYER1) ? PLAYER2 : PLAYER1;
+	maxDepth = (depth % 2 == 0) ? (depth - 1) : depth; // Ensure that depth is odd 
+}
 
 int MiniMax::getAgentMove() { return miniMax(INT_MIN, INT_MAX); }
 
-int MiniMax::miniMax(int alpha, int beta) { 
-	std::pair<int, int> move;
-	if (game->getCurrentTurn() == PLAYER2) {
-		move = maxValue(alpha, beta, maxDepth - 1);
-	}
-	else {
-		move = minValue(alpha, beta, maxDepth - 1);
-	}
-	return move.second;
-}
+int MiniMax::miniMax(int alpha, int beta) { return maxValue(alpha, beta, maxDepth).second; }
 
 std::pair<int, int> MiniMax::minValue(int alpha, int beta, int depth) {
 	std::vector<int> actions = getValidActions();
-	if (game->isGoalState() || depth <= 0) return { utility(depth), -1 };
+	if (game->hasWinner() || game->isDraw() || depth <= 0) return { utility(depth), -1 };
 	std::pair<int, int> bestMove = { AI_WIN, actions[0] };
 	for (int move : actions) {
 		int row = game->nextRow(move);
-		game->addDisc(row, move, PLAYER1);
+		game->addDisc(row, move, opponent);
 		int newValue = maxValue(alpha, beta, depth - 1).first;
 		game->removeDisc(row, move);
 		if (newValue < bestMove.first) bestMove = { newValue, move };
@@ -45,11 +45,11 @@ std::pair<int, int> MiniMax::minValue(int alpha, int beta, int depth) {
 
 std::pair<int, int> MiniMax::maxValue(int alpha, int beta, int depth) {
 	std::vector<int> actions = getValidActions();
-	if (game->isGoalState() || depth <= 0) return { utility(depth), -1 };
+	if (game->hasWinner() || game->isDraw() || depth <= 0) return { utility(depth), -1 };
 	std::pair<int, int> bestMove = { PLAYER_WIN, actions[0] };
 	for (int move : actions) {
 		int row = game->nextRow(move);
-		game->addDisc(row, move, PLAYER2);
+		game->addDisc(row, move, player);
 		int newValue = minValue(alpha, beta, depth - 1).first;
 		game->removeDisc(row, move);
 		if (newValue > bestMove.first) bestMove = { newValue, move };
@@ -69,17 +69,17 @@ std::vector<int> MiniMax::getValidActions() {
 }
 
 int MiniMax::utility(int depth) {
-	int scorePlayer = nInARow(PLAYER1);
-	int scoreAI = nInARow(PLAYER2);
+	int opponentScore = nInARow(opponent);
+	int playerScore = nInARow(player);
 
-	if (scorePlayer == PLAYER_WIN) return scorePlayer - depth;
-	else if (scoreAI == AI_WIN) { return scoreAI + depth; }
+	if (opponentScore == PLAYER_WIN) return opponentScore;
+	else if (playerScore == AI_WIN) { return playerScore; }
 	else if (game->getAvailableSpaces() == 0) return 0;
 
-	return (scoreAI - scorePlayer);
+	return playerScore - opponentScore;
 }
 
-int MiniMax::nInARow(Actor actor) {
+int MiniMax::nInARow(Actor player) {
 	int score = 0;
 	int cols = game->getCols();
 	int rows = game->getRows();
@@ -90,11 +90,11 @@ int MiniMax::nInARow(Actor actor) {
 			int n = 0;
 			int emptyCells = 0;
 			for (int k = 0; k < 4; k++) {
-				if (game->getCell(j + k, i) == actor) n++;
+				if (game->getCell(j + k, i) == player) n++;
 				else if (game->getCell(j + k, i) == 0) emptyCells++;
 				else break;
 			}
-			if (n == 4) return (actor == 2) ? AI_WIN : PLAYER_WIN;
+			if (n == 4) return (player == this->player) ? AI_WIN : PLAYER_WIN;
 			else if (n == 3 && emptyCells == 1) score += 1000;
 			else if (n == 2 && emptyCells == 2) score += 10;
 		}
@@ -106,11 +106,11 @@ int MiniMax::nInARow(Actor actor) {
 			int n = 0;
 			int emptyCells = 0;
 			for (int k = 0; k < 4; k++) {
-				if (game->getCell(i, j + k) == actor) n++;
+				if (game->getCell(i, j + k) == player) n++;
 				else if (game->getCell(i, j + k) == 0) emptyCells++;
 				else break;
 			}
-			if (n == 4) return (actor == 2) ? AI_WIN : PLAYER_WIN;
+			if (n == 4) return (player == this->player) ? AI_WIN : PLAYER_WIN;
 			else if (n == 3 && emptyCells == 1) score += 1000;
 			else if (n == 2 && emptyCells == 2) score += 10;
 		}
@@ -122,22 +122,22 @@ int MiniMax::nInARow(Actor actor) {
 			int n = 0;
 			int emptyCells = 0;
 			for (int k = 0; k < 4; k++) {
-				if (game->getCell(i + k, j + k) == actor) n++;
+				if (game->getCell(i + k, j + k) == player) n++;
 				else if (game->getCell(i + k, j + k) == 0) emptyCells++;
 				else break;
 			}
-			if (n == 4) return (actor == 2) ? AI_WIN : PLAYER_WIN;
+			if (n == 4) return (player == this->player) ? AI_WIN : PLAYER_WIN;
 			else if (n == 3 && emptyCells == 1) score += 1000;
 			else if (n == 2 && emptyCells == 2) score += 10;
 
 			n = 0;
 			emptyCells = 0;
 			for (int k = 0; k < 4; k++) {
-				if (game->getCell(i + k, j + 3 - k)  == actor) n++;
+				if (game->getCell(i + k, j + 3 - k) == player) n++;
 				else if (game->getCell(i + k, j + 3 - k) == 0) emptyCells++;
 				else break;
 			}
-			if (n == 4) return (actor == 2) ? AI_WIN : PLAYER_WIN;
+			if (n == 4) return (player == this->player) ? AI_WIN : PLAYER_WIN;
 			else if (n == 3 && emptyCells == 1) score += 1000;
 			else if (n == 2 && emptyCells == 2) score += 10;
 		}
@@ -147,12 +147,17 @@ int MiniMax::nInARow(Actor actor) {
 }
 
 void MiniMax::generateOptimalMoveOrder() {
-	// Start with the center column
-	int middle = game->getCols() / 2;
-	optimalMoveOrder.push_back(middle);
+	std::vector<int> moves;
 
-	for (int i = 1; i <= middle; i++) {
-		optimalMoveOrder.push_back(middle - i);
-		optimalMoveOrder.push_back(middle + i);
+	// Add center columns first
+	int center = game->getCols() / 2;
+	moves.push_back(center);
+
+	// Add columns in order relative to their distance to the center column
+	for (int i = 1; i <= center; i++) {
+		moves.push_back(center - i);
+		moves.push_back(center + i);
 	}
+
+	optimalMoveOrder = moves;
 }

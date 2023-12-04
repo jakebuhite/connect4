@@ -5,7 +5,12 @@
 //
 #include "connect-four.h"
 
-Connect4::Connect4() { initBoard(); }
+Connect4::Connect4() { 
+	rows = 6;
+	cols = 7;
+	availableSpaces = rows * cols;
+	initBoard(); 
+}
 
 Connect4::Connect4(int rows, int cols) {
 	this->rows = rows;
@@ -50,7 +55,7 @@ void Connect4::addDisc(int row, int col) {
 		return;
 	}
 	availableSpaces--;
-	board[row][col] = (currentTurn == PLAYER1) ? 1 : 2;
+	board[row][col] = currentTurn;
 	lastMove = { row, col };
 }
 
@@ -80,7 +85,10 @@ void Connect4::printBoard() {
 			result += (!board[i][j]) ? "   |" : " " + std::to_string(board[i][j]) + " |";
 		result += "\n+" + repeat("---+", cols) + '\n';
 	}
-	result += "| 0 | 1 | 2 | 3 | 4 | 5 | 6 |\n";
+	for (int i = 0; i < cols; i++) {
+		result += "  " + std::to_string(i) + " ";
+	}
+	result += '\n';
 	std::cout << result;
 }
 
@@ -96,44 +104,65 @@ bool Connect4::validMove(int row, int col) { return (col >= 0) && (col < cols) &
 
 bool Connect4::isDominateMove(int col) { return round == 1 && (col == 0 || (cols % 2 == 1 && col == cols / 2) || col == cols - 1); }
 
-bool Connect4::isGoalState() {
+bool Connect4::hasWinner() {
 	int n = 0;
 	int row = lastMove.first;
 	int col = lastMove.second;
+	int player = (availableSpaces % 2 == 0) ? PLAYER2 : PLAYER1;
 
 	// Check horizontally
-	int start = std::max(col - 3, 0);
-	int end = std::min(cols - 4, col) + 1;
-	for (int i = start; i < end; i++) {
-		int cell = board[row][i];
-		if (cell != 0 && cell == board[row][i + 1] && cell == board[row][i + 2] && cell == board[row][i + 3]) 
-			return true;
+	for (int i = col - 3; i <= col; i++) {
+		if (i >= 0 && i + 3 < cols) {
+			bool win = true;
+			for (int j = 0; j < 4; j++) {
+				if (board[row][i + j] != player) {
+					win = false;
+					break;
+				}
+			}
+			if (win) return true;
+		}
 	}
 
 	// Check vertically
-	start = std::max(row - 3, 0);
-	end = std::min(rows - 4, col) + 1;
-	for (int i = start; i < end; i++) {
-		int cell = board[i][col];
-		if (cell != 0 && cell == board[i + 1][col] && cell == board[i + 2][col] && cell == board[i + 3][col])
-			return true;
+	for (int i = row - 3; i <= row; i++) {
+		if (i >= 0 && i + 3 < rows) {
+			bool win = true;
+			for (int j = 0; j < 4; j++) {
+				if (board[i + j][col] != player) {
+					win = false;
+					break;
+				}
+			}
+			if (win) return true;
+		}
 	}
 
-	// Check diagonally (left to right)
-	for (int i = 0; i <= 3; i++) {
-		if (validMove(row + i, col + i) && validMove(row + i - 3, col + i - 3)) {
-			int cell = board[row + i][col + i];
-			if (cell != 0 && cell == board[row + i - 1][col + i - 1] && cell == board[row + i - 2][col + i - 2] && cell == board[row + i - 3][col + i - 3])
-				return true;
+	// Check diagonally (top left to bottom right)
+	for (int i = -3; i <= 0; i++) {
+		if (row + i >= 0 && row + i + 3 < rows && col + i >= 0 && col + i + 3 < cols) {
+			bool win = true;
+			for (int j = 0; j < 4; j++) {
+				if (board[row + i + j][col + i + j] != player) {
+					win = false;
+					break;
+				}
+			}
+			if (win) return true;
 		}
 	}
 
 	// Check diagonally (right to left)
-	for (int i = 0; i <= 3; i++) {
-		if (validMove(row + i, col - i) && validMove(row + i - 3, col - i + 3)) {
-			int cell = board[row + i][col - i];
-			if (cell != 0 && cell == board[row + i - 1][col - i + 1] && cell == board[row + i - 2][col - i + 2] && cell == board[row + i - 3][col - i + 3])
-				return true;
+	for (int i = -3; i <= 0; i++) {
+		if (row + i >= 0 && row + i + 3 < rows && col - i >= 0 && col - i - 3 < cols) {
+			bool win = true;
+			for (int j = 0; j < 4; j++) {
+				if (board[row + i + j][col - i - j] != player) {
+					win = false;
+					break;
+				}
+			}
+			if (win) return true;
 		}
 	}
 

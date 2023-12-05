@@ -37,7 +37,7 @@ std::pair<int, int> MiniMax::minValue(int alpha, int beta, int depth) {
 		int newValue = maxValue(alpha, beta, depth - 1).first;
 		game->removeDisc(row, move);
 		if (newValue < bestMove.first) bestMove = { newValue, move };
-		beta = std::min(beta, bestMove.first); //newValue);
+		beta = std::min(beta, bestMove.first);
 		if (alpha >= beta) break;
 	}
 	return bestMove;
@@ -51,10 +51,6 @@ std::pair<int, int> MiniMax::maxValue(int alpha, int beta, int depth) {
 		int row = game->nextRow(move);
 		game->addDisc(row, move, player);
 		int newValue = minValue(alpha, beta, depth - 1).first;
-		if (depth == maxDepth) {
-			game->printBoard();
-			std::cout << "MOVE: " << move << " VALUE: " << newValue << std::endl;
-		}
 		game->removeDisc(row, move);
 		if (newValue > bestMove.first) bestMove = { newValue, move };
 		alpha = std::max(alpha, bestMove.first);
@@ -76,8 +72,8 @@ int MiniMax::utility(int depth) {
 	int opponentScore = nInARow(opponent);
 	int playerScore = nInARow(player);
 
-	if (opponentScore == PLAYER_WIN) return opponentScore + depth;
-	else if (playerScore == AI_WIN) { return playerScore - depth; }
+	if (opponentScore == PLAYER_WIN) return opponentScore - depth;
+	else if (playerScore == AI_WIN) { return playerScore + depth; }
 	else if (game->getAvailableSpaces() == 0) return 0;
 
 	return playerScore - opponentScore;
@@ -87,14 +83,6 @@ int MiniMax::nInARow(Actor player) {
 	int score = 0;
 	int cols = game->getCols();
 	int rows = game->getRows();
-
-	// Priorize center
-	//std::vector<int> center_array;
-	//for (int i = 0; i < rows; ++i) {
-	//	center_array.push_back(static_cast<int>(game->getCell(i, optimalMoveOrder[0]/*cols / 2*/)));
-	//}
-	//int center_count = std::count(center_array.begin(), center_array.end(), player);
-	//score += center_count * 800;
 
 	// Check vertical n in a row
 	for (int i = 0; i < cols; i++) {
